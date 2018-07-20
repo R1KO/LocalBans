@@ -41,7 +41,7 @@ public Action Command_AddBan(int iClient, int iArgs)
 	char szAuth[32];
 	GetCmdArg(1, szAuth, sizeof(szAuth));
 
-	if (!((strncmp(szAuth, "STEAM_", 6) == 0 && szAuth[7] == ':') || strncmp(szAuth, "[U:", 3) == 0))
+	if (!(!strncmp(szAuth, "STEAM_", 6) && szAuth[7] == ':') && strncmp(szAuth, "[U:", 3)))
 	{
 		ReplyToCommand(iClient, "[SM] %t", "Invalid SteamID specified");
 		return Plugin_Handled;
