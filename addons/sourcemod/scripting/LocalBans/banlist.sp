@@ -212,18 +212,32 @@ public void SQL_Callback_SelectBanInfo(Database hDatabase, DBResultSet results, 
 						szDuration,
 						szExp);
 		}
-
+/*
 		bool bRemoveBanAccess = CheckCommandAccess(iClient, "sm_remove_ban", ADMFLAG_UNBAN);
 		bool bUnBanAccess = CheckCommandAccess(iClient, "sm_unban", ADMFLAG_UNBAN);
+		*/
+		bool bIsRoot = (GetUserFlagsBits(iClient) & ADMFLAG_ROOT != 0);
 		bool bItsHimBan = (strcmp(szAdminAuth2, szAdminAuth) == 0);
 		
-		if((g_bUnBanMode && (bItsHimBan || bUnBanAccess)) || (!g_bUnBanMode && bUnBanAccess))
+		/*if((g_bUnBanMode && (bItsHimBan || bUnBanAccess)) || (!g_bUnBanMode && bUnBanAccess))
 		{
 			FormatEx(szID, sizeof(szID), "u%i", iID);
 			hMenu.AddItem(szID, "Разбанить");
 		}
 		
 		if((g_bRemoveBanMode && (bItsHimBan || bRemoveBanAccess)) || (!g_bRemoveBanMode && bRemoveBanAccess))
+		{
+			FormatEx(szID, sizeof(szID), "r%i", iID);
+			hMenu.AddItem(szID, "Удалить");
+		}*/
+		
+		if(bIsRoot || (g_bUnBanMode && bItsHimBan))
+		{
+			FormatEx(szID, sizeof(szID), "u%i", iID);
+			hMenu.AddItem(szID, "Разбанить");
+		}
+		
+		if(bIsRoot || (g_bRemoveBanMode && bItsHimBan))
 		{
 			FormatEx(szID, sizeof(szID), "r%i", iID);
 			hMenu.AddItem(szID, "Удалить");
