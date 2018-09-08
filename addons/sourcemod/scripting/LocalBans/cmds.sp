@@ -104,11 +104,21 @@ public Action Command_Unban(int iClient, int iArgs)
 		return Plugin_Handled;
 	}
 
-	char szQuery[256], szAuth[32];
+	char szQuery[256], szAuth[32], szPart[128];
 	GetCmdArg(1, szAuth, sizeof(szAuth));
 
-	
-	FormatEx(szQuery, sizeof(szQuery), "UPDATE `table_bans` SET `remove_type` = 1 WHERE `remove_type` = '0' AND (`auth` = '%s' OR `ip` = '%s');", szAuth, szAuth);
+	if(g_bUnBanMode && !(GetUserFlagBits(iClient) & ADMFLAG_ROOT))
+	{
+		char szAdminAuth[32];
+		GetClientAuthId(iClient, AuthId_Engine, szAdminAuth, sizeof(szAdminAuth));
+		FormatEx(szPart, sizeof(szPart), " AND (`admin_auth` = '%s');", szAdminAuth);
+	}
+	else
+	{
+		szPart[0] = 0;
+	}
+
+	FormatEx(szQuery, sizeof(szQuery), "UPDATE `table_bans` SET `remove_type` = 1 WHERE `remove_type` = '0' AND (`auth` = '%s' OR `ip` = '%s')%s;", szAuth, szAuth, szPart);
 	g_hDatabase.Query(SQL_Callback_UnBan, szQuery, iClient ? UID(iClient):0);
 
 	return Plugin_Handled;
