@@ -216,7 +216,7 @@ public void SQL_Callback_SelectBanInfo(Database hDatabase, DBResultSet results, 
 		bool bRemoveBanAccess = CheckCommandAccess(iClient, "sm_remove_ban", ADMFLAG_UNBAN);
 		bool bUnBanAccess = CheckCommandAccess(iClient, "sm_unban", ADMFLAG_UNBAN);
 		*/
-		bool bIsRoot = (GetUserFlagsBits(iClient) & ADMFLAG_ROOT != 0);
+		bool bIsRoot = (GetUserFlagBits(iClient) & ADMFLAG_ROOT != 0);
 		bool bItsHimBan = (strcmp(szAdminAuth2, szAdminAuth) == 0);
 		
 		/*if((g_bUnBanMode && (bItsHimBan || bUnBanAccess)) || (!g_bUnBanMode && bUnBanAccess))
