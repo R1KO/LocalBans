@@ -55,10 +55,13 @@ public Action Command_AddBan(int iClient, int iArgs)
 	{
 		GetCmdArg(3, szReason, sizeof(szReason));
 	}
+
 	if (iArgs == 4)
 	{
 		GetCmdArg(4, szName, sizeof(szName));
 	}
+	
+	DebugMessage("Command_AddBan: szAuth = '%s', szName = '%s', iTime = %i szReason = '%s'", szAuth, szName, S2I(szTime)*60, szReason)
 
 	UTIL_CreateBan(iClient, _, szAuth, szName, _, S2I(szTime)*60, szReason);
 
@@ -112,31 +115,4 @@ public Action Command_Unban(int iClient, int iArgs)
 	g_hDatabase.Query(SQL_Callback_UnBan, szQuery, iClient ? UID(iClient):0);
 
 	return Plugin_Handled;
-}
-
-public void SQL_Callback_UnBan(Database hDatabase, DBResultSet results, const char[] sError, any iClient)
-{
-	if(sError[0])
-	{
-		LogError("SQL_Callback_UnBan: %s", sError);
-		return;
-	}
-	
-	if(iClient)
-	{
-		iClient = GetClientOfUserId(iClient);
-		if(!iClient)
-		{
-			return;
-		}
-	}
-	
-	if(results.AffectedRows)
-	{
-		ReplyToCommand(iClient, "[SM] Игрок разбанен!");
-	}
-	else
-	{
-		ReplyToCommand(iClient, "[SM] Бан не найден!");
-	}
 }

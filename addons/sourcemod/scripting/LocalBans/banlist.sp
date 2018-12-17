@@ -125,6 +125,7 @@ void DisplayBanInfoMenu(int iClient, int iID)
 	char szQuery[256];
 	FormatEx(szQuery, sizeof(szQuery), "SELECT `id`, `name`, `admin_name`, `admin_auth`, `ban_time`, `length`, `reason`, `remove_type` FROM `table_bans` WHERE `id` = '%i';", iID);
 
+	DebugMessage("DisplayBanInfoMenu: %i '%s'", iID, szQuery)
 	g_hDatabase.Query(SQL_Callback_SelectBanInfo, szQuery, UID(iClient));
 }
 
@@ -143,35 +144,61 @@ public void SQL_Callback_SelectBanInfo(Database hDatabase, DBResultSet results, 
 		hMenu.ExitBackButton = true;
 		
 		int iID = results.FetchInt(0);
+		DebugMessage("SQL_Callback_SelectBanInfo: iID = %i", iID)
 		int iBanTime = results.FetchInt(4);
+		DebugMessage("iBanTime = %i", iBanTime)
 		int iLength = results.FetchInt(5);
+		DebugMessage("iLength = %i", iLength)
 		int iTime = GetTime();
+		DebugMessage("iTime = %i", iTime)
 		
 		char szID[16], szAuth[32], szName[MAX_NAME_LENGTH], szBanReason[256], szAdminName[MAX_NAME_LENGTH], szAdminAuth[32], szAdminAuth2[32], szBanTime[64], szDuration[64], szExp[64];
 		results.FetchString(1, szName, sizeof(szName));
 		results.FetchString(2, szAdminName, sizeof(szAdminName));
 		results.FetchString(3, szAdminAuth, sizeof(szAdminAuth));
 		results.FetchString(6, szBanReason, sizeof(szBanReason));
+		DebugMessage("szName = %s", szName)
+		DebugMessage("szAdminName = %s", szAdminName)
+		DebugMessage("szAdminAuth = %s", szAdminAuth)
+		DebugMessage("szBanReason = %s", szBanReason)
 		GetClientAuthId(iClient, AuthId_Engine, szAdminAuth2, sizeof(szAdminAuth2));
 		FormatTime(szBanTime, sizeof(szBanTime), g_szTimeFormat, iBanTime);	
 		if(!GetDuration(iLength, szDuration, sizeof(szDuration)))
 		{
 			FormatEx(szDuration, sizeof(szDuration), "%i мин.", iLength/60);
 		}
-		
+
 		if(iLength)
 		{
-			UTIL_GetTimeFromStamp(szExp, sizeof(szExp), ((iBanTime+iLength)-iTime), iClient);
-			Format(szExp, sizeof(szExp), "через %s", szExp);
+			if(iTime < (iBanTime+iLength))
+			{
+				UTIL_GetTimeFromStamp(szExp, sizeof(szExp), ((iBanTime+iLength)-iTime), iClient);
+				Format(szExp, sizeof(szExp), "через %s", szExp);
+			}
+			else
+			{
+				strcopy(szExp, sizeof(szExp), "-");
+			}
 		}
 		else
 		{
 			strcopy(szExp, sizeof(szExp), "Никогда");
 		}
+		
+		char szBuffer[64];
+		DebugMessage("remove_type = %i", results.FetchInt(7))
+		
+		switch(results.FetchInt(7))
+		{
+			case 0:	FormatEx(szBuffer, sizeof(szBuffer), "Активный\nИстекает: %s", szExp);
+			case 1:	strcopy(szBuffer, sizeof(szBuffer), "Истек");
+			case 2:	strcopy(szBuffer, sizeof(szBuffer), "Разбанен");
+		}
 
 		if(g_bShowBansMode)
 		{
 			char szBuffer[64];
+			DebugMessage("remove_type = %i", results.FetchInt(7))
 			
 			switch(results.FetchInt(7))
 			{
@@ -220,12 +247,14 @@ public void SQL_Callback_SelectBanInfo(Database hDatabase, DBResultSet results, 
 		if((g_bUnBanMode && (bItsHimBan || bUnBanAccess)) || (!g_bUnBanMode && bUnBanAccess))
 		{
 			FormatEx(szID, sizeof(szID), "u%i", iID);
+			DebugMessage("AddItem: iID = '%s'", szID)
 			hMenu.AddItem(szID, "Разбанить");
 		}
 		
 		if((g_bRemoveBanMode && (bItsHimBan || bRemoveBanAccess)) || (!g_bRemoveBanMode && bRemoveBanAccess))
 		{
 			FormatEx(szID, sizeof(szID), "r%i", iID);
+			DebugMessage("AddItem: iID = '%s'", szID)
 			hMenu.AddItem(szID, "Удалить");
 		}
 		
@@ -257,20 +286,36 @@ public int MenuHandler_BanInfo(Menu hMenu, MenuAction action, int iClient, int I
 		{
 			char szID[16];
 			hMenu.GetItem(Item, szID, sizeof(szID));
+			DebugMessage("MenuHandler_BanInfo: %i '%s'", Item, szID)
 
 			int iID = S2I(szID[1]);
+			DebugMessage("iID = %i", iID)
 			if(szID[0] == 'u')
 			{
-				UTIL_UnBan(iID, 2);
-				DisplayBanInfoMenu(iClient, iID);
-				PrintToChat(iClient, "Игрок разбанен!");
+				UTIL_UnBan(iID, 2, UID(iClient));
+				if(g_bShowBansMode)
+				{
+					DisplayBanInfoMenu(iClient, iID);
+				}
+				else
+				{
+					DisplayBanListMenu(iClient);
+				}
+			//	PrintToChat(iClient, "Игрок разбанен!");
 				return 0;
 			}
 
 			if(szID[0] == 'r')
 			{
-				UTIL_RemoveBan(iID);
-				DisplayBanListMenu(iClient);
+				UTIL_RemoveBan(iID, UID(iClient));
+				if(g_bShowBansMode)
+				{
+					DisplayBanListMenu(iClient);
+				}
+				else
+				{
+					DisplayBanListMenu(iClient);
+				}
 				PrintToChat(iClient, "Бан удален!");
 				return 0;
 			}

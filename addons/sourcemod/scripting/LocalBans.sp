@@ -22,7 +22,7 @@ public Plugin myinfo =
 
 #define KICK_DELAY		4.0
  
-#define DEBUG_MODE 0
+#define DEBUG_MODE 1
 
 #if DEBUG_MODE 1
 
@@ -41,7 +41,7 @@ stock void DebugMsg(const char[] szMsg, any ...)
 #endif
 
 int		g_iShowBansCount;		//	Количество запрашиваемых банов
-bool	g_bShowBansMode;		//	Режим отображения банов 1 - Показывать все баны / 0 - Только активные
+bool	g_bShowBansMode;		//	Режим отображения банов (1 - Показывать все баны / 0 - Только активные)
 bool	g_bRemoveBanMode;		//	Кто может удалять баны (0 - Только root, 1 - Root и забанивший админ)
 bool	g_bUnBanMode;			//	Кто может разбанивать (0 - Только root, 1 - Root и забанивший админ)
 bool	g_bCheckBanMode;		//	Режим проверки бана (0 - Проверять только SteamID, 1 - Проверять SteamID и IP)
@@ -66,10 +66,10 @@ TopMenu		g_hTopMenu;
 #include "LocalBans/util.sp"
 #include "LocalBans/db.sp"
 #include "LocalBans/cmds.sp"
-#include "LocalBans/ban.sp"
+#include "LocalBans/ban.sp"/*
 #include "LocalBans/banlist.sp"
 #include "LocalBans/offlineban.sp"
-
+*/
 public void OnPluginStart()
 {
 	char sError[128];
@@ -180,8 +180,8 @@ public void OnAdminMenuReady(Handle hSourceTopMenu)
 	if (TopMenuCategory != INVALID_TOPMENUOBJECT)
 	{
 		g_hTopMenu.AddItem("sm_ban", AdminMenu_Ban, TopMenuCategory, "sm_ban", ADMFLAG_BAN);
-		g_hTopMenu.AddItem("sm_offlineban", AdminMenu_OfflineBan, TopMenuCategory, "sm_offlineban", ADMFLAG_BAN);
-		g_hTopMenu.AddItem("sm_banlist", AdminMenu_BanList, TopMenuCategory, "sm_banlist", ADMFLAG_BAN);
+		/*g_hTopMenu.AddItem("sm_offlineban", AdminMenu_OfflineBan, TopMenuCategory, "sm_offlineban", ADMFLAG_BAN);
+		g_hTopMenu.AddItem("sm_banlist", AdminMenu_BanList, TopMenuCategory, "sm_banlist", ADMFLAG_BAN);*/
 	}
 }
 
@@ -264,14 +264,15 @@ public int MenuHandler_WaitChat(Menu hMenu, MenuAction action, int iClient, int 
 			g_bWaitChat[iClient] = false;
 			if (Item == MenuCancel_ExitBack)
 			{
-				if(g_bOffBan[iClient])
+				DisplayBanReasonMenu(iClient);
+				/*if(g_bOffBan[iClient])
 				{
 					DisplayOfflineListMenu(iClient);
 				}
 				else
 				{
 					DisplayBanListMenu(iClient);
-				}
+				}*/
 			}
 		}
 	case MenuAction_Select:
@@ -279,7 +280,16 @@ public int MenuHandler_WaitChat(Menu hMenu, MenuAction action, int iClient, int 
 			g_bWaitChat[iClient] = false;
 			char szBuffer[128];
 			hMenu.GetItem(Item, szBuffer, sizeof(szBuffer));
-			if(g_bSearch[iClient])
+			int iTarget = CID(g_iBanTarget[iClient]);
+			if (iTarget == 0)
+			{
+				PrintToChat(iClient, "%t", "Player no longer available");
+			}
+			else
+			{
+				UTIL_CreateBan(iClient, iTarget, _, _, _,  g_iBanTime[iClient]*60, szBuffer);
+			}
+			/*if(g_bSearch[iClient])
 			{
 				char szQuery[256];
 				if(g_bOffBan[iClient])
@@ -304,14 +314,14 @@ public int MenuHandler_WaitChat(Menu hMenu, MenuAction action, int iClient, int 
 					int iTarget = CID(g_iBanTarget[iClient]);
 					if (iTarget == 0)
 					{
-						PrintToChat(iClient, "[SM] %t", "Player no longer available");
+						PrintToChat(iClient, "%t", "Player no longer available");
 					}
 					else
 					{
 						UTIL_CreateBan(iClient, iTarget, _, _, _,  g_iBanTime[iClient]*60, szBuffer);
 					}
 				}
-			}
+			}*/
 		}
 	}
 

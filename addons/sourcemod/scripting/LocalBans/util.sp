@@ -254,18 +254,81 @@ public Action Timer_KickDelay(Handle hTimer, Handle hDataPack)
 	return Plugin_Stop;
 }
 
-void UTIL_UnBan(int iBanID, int iType = 1)
+void UTIL_UnBan(int iBanID, int iType = 1, int iUserID = -1)
 {
 	char szQuery[256];
 	FormatEx(szQuery, sizeof(szQuery), "UPDATE `table_bans` SET `remove_type` = %i WHERE `id` = '%i';", iType, iBanID);
-	g_hDatabase.Query(SQL_Callback_CheckError, szQuery);
+	DebugMessage("UTIL_UnBan: '%s'", szQuery)
+	g_hDatabase.Query(SQL_Callback_UnBan, szQuery, iUserID);
 }
 
-void UTIL_RemoveBan(int iBanID)
+public void SQL_Callback_UnBan(Database hDatabase, DBResultSet results, const char[] sError, any iClient)
+{
+	if(sError[0])
+	{
+		LogError("SQL_Callback_UnBan: %s", sError);
+		return;
+	}
+	
+	if(iClient != -1)
+	{
+		if(iClient != 0)
+		{
+			iClient = GetClientOfUserId(iClient);
+			if(!iClient)
+			{
+				return;
+			}
+		}
+	
+		DebugMessage("SQL_Callback_UnBan: AffectedRows = %i", results.AffectedRows)
+	
+		if(results.AffectedRows)
+		{
+			ReplyToCommand(iClient, "[SM] Игрок разбанен!");
+		}
+		else
+		{
+			ReplyToCommand(iClient, "[SM] Бан не найден!");
+		}
+	}
+}
+
+void UTIL_RemoveBan(int iBanID, int iUserID = -1)
 {
 	char szQuery[256];
 	FormatEx(szQuery, sizeof(szQuery), "DELETE FROM `table_bans` WHERE `id` = '%i';", iBanID);
-	g_hDatabase.Query(SQL_Callback_CheckError, szQuery);
+	g_hDatabase.Query(SQL_Callback_RemoveBan, szQuery, iUserID);
+}
+
+public void SQL_Callback_RemoveBan(Database hDatabase, DBResultSet results, const char[] sError, any iClient)
+{
+	if(sError[0])
+	{
+		LogError("SQL_Callback_RemoveBan: %s", sError);
+		return;
+	}
+	
+	if(iClient != -1)
+	{
+		if(iClient != 0)
+		{
+			iClient = GetClientOfUserId(iClient);
+			if(!iClient)
+			{
+				return;
+			}
+		}
+	
+		if(results.AffectedRows)
+		{
+			ReplyToCommand(iClient, "[SM] Бан удален!");
+		}
+		else
+		{
+			ReplyToCommand(iClient, "[SM] Бан не найден!");
+		}
+	}
 }
 
 void UTIL_GetTimeFromStamp(char[] szBuffer, int iMaxLen, int iTimeStamp, int iClient = LANG_SERVER)

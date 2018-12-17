@@ -18,8 +18,8 @@ void CreateTables()
 	g_hDatabase.Query(SQL_Callback_CheckError,	"CREATE TABLE IF NOT EXISTS `table_offline` (\
 															`id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
 															`auth` VARCHAR(32) NOT NULL,\
-															`ip` VARCHAR(16) NOT NULL,\
-															`name` VARCHAR(32) NOT NULL,\
+															`ip` VARCHAR(16) NOT NULL default 'unknown',\
+															`name` VARCHAR(32) NOT NULL default 'unknown',\
 															`time_disconnect` INTEGER UNSIGNED NOT NULL);");
 	SQL_UnlockDatabase(g_hDatabase);
 }
